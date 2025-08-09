@@ -32,12 +32,13 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: github-actions@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com
       - name: Setup Google Cloud
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
       - name: Configure Docker
-        run: gcloud auth configure-docker asia-northeast2-docker.pkg.dev
+        run: gcloud auth configure-docker asia-northeast1-docker.pkg.dev
       - name: Build Docker image
         run: docker build --platform linux/amd64 -t ${{ env.IMAGE_NAME }}:latest -f Dockerfile .
       - name: Push Docker image
