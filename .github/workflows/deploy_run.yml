@@ -12,9 +12,9 @@ on:
         default: 'sample-app'
 
 env:
-  IMAGE_NAME: asia-northeast2-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/yumizu-images/${{ inputs.app_name }}
-  WORKLOAD_IDENTITY_PROVIDER: projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/pool/providers/github
-  REGION: asia-northeast2
+  IMAGE_NAME: asia-northeast1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/my-app-images/${{ inputs.app_name }}
+  WORKLOAD_IDENTITY_PROVIDER: projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github-pool/providers/github
+  REGION: asia-northeast1
   PORT: 8080
 
 permissions:
