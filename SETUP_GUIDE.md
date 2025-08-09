@@ -109,14 +109,14 @@ GitHub ActionsからGoogle Cloudにアクセスするには、安全な認証方
 **ブラウザで設定する方法（推奨）:**
 1. Google Cloud Consoleで「IAMと管理」→「Workload Identity連携」を検索
 2. 「プールを作成」をクリック
-3. プール名：`pool`
-4. プールID：`pool`
+3. プール名：`github-pool`
+4. プールID：`github-pool`
 5. 「続行」→「完了」
 
 **コマンドラインで設定する方法:**
 ```bash
 # Google Cloud CLIがインストールされている場合
-gcloud iam workload-identity-pools create "pool" \
+gcloud iam workload-identity-pools create "github-pool" \
     --project="$PROJECT_ID" \
     --location="global" \
     --display-name="GitHub Actions Pool"
@@ -131,7 +131,7 @@ gcloud iam workload-identity-pools create "pool" \
 gcloud iam workload-identity-pools providers create-oidc "github" \
     --project="$PROJECT_ID" \
     --location="global" \
-    --workload-identity-pool="pool" \
+    --workload-identity-pool="github-pool" \
     --display-name="GitHub Provider" \
     --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository" \
     --attribute-condition="assertion.repository == '$GITHUB_REPO'" \
@@ -173,7 +173,7 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 # GitHubからサービスアカウントを使用する権限を付与
 gcloud iam service-accounts add-iam-policy-binding \
     --role roles/iam.workloadIdentityUser \
-    --member "principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/pool/attribute.repository/$GITHUB_REPO" \
+    --member "principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/github-pool/attribute.repository/$GITHUB_REPO" \
     github-actions@$PROJECT_ID.iam.gserviceaccount.com
 ```
 
@@ -257,7 +257,7 @@ gcloud projects describe YOUR_PROJECT_ID
 gcloud services list --enabled
 
 # Workload Identity Pool確認
-gcloud iam workload-identity-pools describe pool --location=global
+gcloud iam workload-identity-pools describe github-pool --location=global
 ```
 
 ## 料金について
