@@ -44,10 +44,10 @@ Google Cloud Consoleで以下のAPIを有効にします：
 1. 左側メニューから「APIとサービス」→「ライブラリ」をクリック
 2. 以下のAPIを検索して有効にする：
 
-   - **Cloud Run API** - アプリケーションを実行するサービス
+   - **Cloud Run Admin API** - アプリケーションを実行するサービス（「Cloud Run API」と表示される場合もあり）
    - **Artifact Registry API** - Docker画像を保存するレジストリ
    - **Cloud Build API** - 自動ビルドサービス
-   - **IAM Service Account Credentials API** - 権限管理
+   - **IAM Service Account Credentials API** - 権限管理（「Service Account Credentials API」と表示される場合もあり）
 
 各APIの有効化手順：
 1. API名で検索
@@ -115,14 +115,21 @@ gcloud iam workload-identity-pools providers create-oidc "github" \
     --workload-identity-pool="pool" \
     --display-name="GitHub Provider" \
     --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository" \
+    --attribute-condition="assertion.repository == 'YOUR_GITHUB_USERNAME/YOUR_REPO_NAME'" \
     --issuer-uri="https://token.actions.githubusercontent.com"
 ```
+
+**重要:** `YOUR_GITHUB_USERNAME/YOUR_REPO_NAME` を実際のGitHubリポジトリ名に置き換えてください。
+例: `marumarukun/streamlit-cloud-run-sample`
 
 ### 4.3 サービスアカウントの作成と権限設定
 
 **何をするのか:** GitHub Actionsが使用する「ロボットユーザー」を作成し、必要な権限を与えます。
 
 ```bash
+# まず、gcloudでデフォルトプロジェクトを設定
+gcloud config set project YOUR_PROJECT_ID
+
 # サービスアカウント作成
 gcloud iam service-accounts create github-actions \
     --display-name="GitHub Actions"
