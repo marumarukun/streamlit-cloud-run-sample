@@ -28,6 +28,25 @@ Google Cloudでは、すべてのリソース（アプリケーション、デ�
 - プロジェクトID（自動生成される文字列、例：`my-streamlit-app-123456`）
 - プロジェクト番号（数字のみ、例：`123456789012`）
 
+**環境変数を設定してコマンドを簡単にしましょう：**
+
+```bash
+# 以下の値を自分のプロジェクト情報に置き換えて実行
+export PROJECT_ID="your-project-id-here"
+export PROJECT_NUMBER="your-project-number-here"
+export GITHUB_REPO="your-github-username/your-repo-name"
+
+# プロジェクト番号を確認（PROJECT_IDを設定した後に実行）
+gcloud projects describe $PROJECT_ID --format="value(projectNumber)"
+```
+
+**例：**
+```bash
+export PROJECT_ID="my-streamlit-app-123456"
+export PROJECT_NUMBER="123456789012"
+export GITHUB_REPO="marumarukun/streamlit-cloud-run-sample"
+```
+
 これらの情報は後で使用するのでメモしておいてください。
 
 ## 手順2: 必要なAPIの有効化
@@ -98,7 +117,7 @@ GitHub ActionsからGoogle Cloudにアクセスするには、安全な認証方
 ```bash
 # Google Cloud CLIがインストールされている場合
 gcloud iam workload-identity-pools create "pool" \
-    --project="YOUR_PROJECT_ID" \
+    --project="$PROJECT_ID" \
     --location="global" \
     --display-name="GitHub Actions Pool"
 ```
@@ -110,17 +129,14 @@ gcloud iam workload-identity-pools create "pool" \
 **コマンドラインで実行:**
 ```bash
 gcloud iam workload-identity-pools providers create-oidc "github" \
-    --project="YOUR_PROJECT_ID" \
+    --project="$PROJECT_ID" \
     --location="global" \
     --workload-identity-pool="pool" \
     --display-name="GitHub Provider" \
     --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository" \
-    --attribute-condition="assertion.repository == 'YOUR_GITHUB_USERNAME/YOUR_REPO_NAME'" \
+    --attribute-condition="assertion.repository == '$GITHUB_REPO'" \
     --issuer-uri="https://token.actions.githubusercontent.com"
 ```
-
-**重要:** `YOUR_GITHUB_USERNAME/YOUR_REPO_NAME` を実際のGitHubリポジトリ名に置き換えてください。
-例: `marumarukun/streamlit-cloud-run-sample`
 
 ### 4.3 サービスアカウントの作成と権限設定
 
@@ -128,27 +144,27 @@ gcloud iam workload-identity-pools providers create-oidc "github" \
 
 ```bash
 # まず、gcloudでデフォルトプロジェクトを設定
-gcloud config set project YOUR_PROJECT_ID
+gcloud config set project $PROJECT_ID
 
 # サービスアカウント作成
 gcloud iam service-accounts create github-actions \
     --display-name="GitHub Actions"
 
 # Cloud Runへのデプロイ権限を付与
-gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
-    --member="serviceAccount:github-actions@YOUR_PROJECT_ID.iam.gserviceaccount.com" \
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" \
     --role="roles/run.admin"
 
 # Artifact Registryへの書き込み権限を付与
-gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
-    --member="serviceAccount:github-actions@YOUR_PROJECT_ID.iam.gserviceaccount.com" \
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" \
     --role="roles/artifactregistry.writer"
 
 # GitHubからサービスアカウントを使用する権限を付与
 gcloud iam service-accounts add-iam-policy-binding \
     --role roles/iam.workloadIdentityUser \
-    --member "principalSet://iam.googleapis.com/projects/YOUR_PROJECT_NUMBER/locations/global/workloadIdentityPools/pool/attribute.repository/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME" \
-    github-actions@YOUR_PROJECT_ID.iam.gserviceaccount.com
+    --member "principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/pool/attribute.repository/$GITHUB_REPO" \
+    github-actions@$PROJECT_ID.iam.gserviceaccount.com
 ```
 
 ## 手順5: GitHubリポジトリでの設定
@@ -168,8 +184,15 @@ GitHubリポジトリで以下のSecretsを設定：
 
 **必要なSecrets:**
 
-- `GCP_PROJECT_ID`: 手順1で取得したプロジェクトID
-- `GCP_PROJECT_NUMBER`: 手順1で取得したプロジェクト番号
+- `GCP_PROJECT_ID`: 環境変数で設定した `$PROJECT_ID` の値
+- `GCP_PROJECT_NUMBER`: 環境変数で設定した `$PROJECT_NUMBER` の値
+
+**確認コマンド:**
+```bash
+# 設定した値を確認
+echo "Project ID: $PROJECT_ID"
+echo "Project Number: $PROJECT_NUMBER"
+```
 
 ### 5.2 ワークフローファイルの更新
 
